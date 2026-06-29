@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Work Hours | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { padding: 20px 24px 36px; }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .metric { border-left: 3px solid #176c74; background: #f7f9fa; padding: 10px; min-height: 58px; }
+    .metric strong { display: block; font-size: 21px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; margin-top: 18px; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border-bottom: 1px solid #d8dee4; padding: 8px 6px; text-align: left; vertical-align: top; font-size: 13px; overflow-wrap: anywhere; }
+    th { color: #5f6b73; font-weight: 600; }
+    a { color: #176c74; text-decoration: none; }
+    .muted { color: #5f6b73; }
+    @media (max-width: 900px) { main { padding: 16px; } header { padding: 16px; } .summary { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Work Hours</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <a href="/dashboard/work-hours/export.csv">Export CSV</a>
+  </header>
+  <main>
+    <div class="summary">
+      <div class="metric"><span class="muted">Today Logged</span><strong>{{ "%.1f"|format(today.logged_work_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">Week Logged</span><strong>{{ "%.1f"|format(week.logged_work_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">Month Logged</span><strong>{{ "%.1f"|format(month.logged_work_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">YTD Logged</span><strong>{{ "%.1f"|format(year.logged_work_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">Week Worksite</span><strong>{{ "%.1f"|format(week.worksite_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">MTD Worksite</span><strong>{{ "%.1f"|format(month.worksite_hours) }}h</strong></div>
+      <div class="metric"><span class="muted">Avg Arrival</span><strong>{{ average_arrival or "n/a" }}</strong></div>
+      <div class="metric"><span class="muted">Avg Leave</span><strong>{{ average_leave or "n/a" }}</strong></div>
+    </div>
+
+    <section>
+      <h2>Daily Summaries</h2>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Arrived</th><th>Left</th><th>Worksite</th><th>Logged</th><th>Lunch</th><th>Missing</th><th>Confidence</th></tr>
+        </thead>
+        <tbody>
+          {% for summary in summaries %}
+          <tr>
+            <td>{{ summary.date }}</td>
+            <td>{% if summary.arrived_work_at %}{{ summary.arrived_work_at.strftime("%H:%M") }}{% endif %}</td>
+            <td>{% if summary.left_work_at %}{{ summary.left_work_at.strftime("%H:%M") }}{% endif %}</td>
+            <td>{{ "%.1f"|format((summary.worksite_duration_minutes or 0) / 60) }}h</td>
+            <td>{{ "%.1f"|format(summary.logged_work_minutes / 60) }}h</td>
+            <td>{{ "%.1f"|format(summary.lunch_break_minutes / 60) }}h</td>
+            <td>{% if summary.missing_arrival_event %}arrival {% endif %}{% if summary.missing_leave_event %}leave{% endif %}</td>
+            <td>{{ summary.confidence }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="muted">No work-hour summaries yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

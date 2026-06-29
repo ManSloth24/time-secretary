@@ -1,0 +1,121 @@
+# Daily Report - {{ period_start.date() }}
+
+## Summary
+{{ narrative }}
+
+## Totals
+- Total tracked time: {{ "%.2f"|format(total_hours) }} hours
+- Work time: {{ "%.2f"|format(minutes_by_primary["Work"] / 60) }} hours
+- Home time: {{ "%.2f"|format(minutes_by_primary["Home"] / 60) }} hours
+- Unknown time: {{ "%.2f"|format(minutes_by_primary["Unknown"] / 60) }} hours
+- Missed check-ins: {{ missed_count }}
+
+## Timeline
+| Time | Entry | Category | Project |
+| --- | --- | --- | --- |
+{% for item in timeline -%}
+| {{ item.time }} | {{ item.text }} | {{ item.category }} | {{ item.project }} |
+{% else -%}
+| | No entries logged. | | |
+{% endfor %}
+
+## Time By Category
+{% for category, minutes in minutes_by_secondary.most_common() -%}
+- {{ category }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No category time.
+{% endfor %}
+
+## Work Project Allocation
+{% for project, minutes in minutes_by_project.most_common() -%}
+- {{ project }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No assigned project time.
+{% endfor %}
+
+## Workday Signals
+- First work-related entry: {% if first_work_entry %}{{ first_work_entry.interval_start.strftime("%H:%M") }} - {{ first_work_entry.raw_text }}{% else %}None{% endif %}
+- Last work-related entry: {% if last_work_entry %}{{ last_work_entry.interval_end.strftime("%H:%M") }} - {{ last_work_entry.raw_text }}{% else %}None{% endif %}
+- Commute estimate: {{ "%.2f"|format(commute_minutes / 60) }} hours
+- Notable context switches: {{ context_switches }}
+- Unassigned work entries: {{ unassigned_work_entries|length }}
+- Arrived work: {% if work_hours.summaries and work_hours.summaries[0].arrived_work_at %}{{ work_hours.summaries[0].arrived_work_at.strftime("%H:%M") }}{% else %}Unknown{% endif %}
+- Left work: {% if work_hours.summaries and work_hours.summaries[0].left_work_at %}{{ work_hours.summaries[0].left_work_at.strftime("%H:%M") }}{% else %}Unknown{% endif %}
+- Worksite duration: {{ "%.2f"|format(work_hours.worksite_duration_minutes / 60) }} hours
+- Logged work activity: {{ "%.2f"|format(work_hours.logged_work_minutes / 60) }} hours
+- Lunch/break time: {% if work_hours.summaries %}{{ "%.2f"|format(work_hours.summaries[0].lunch_break_minutes / 60) }}{% else %}0.00{% endif %} hours
+- Missing location events: {{ work_hours.missing_event_count }}
+
+## Work Intelligence
+- High-value work estimate: {{ "%.2f"|format(work_intelligence.high_value_minutes / 60) }} hours
+- Low-value/admin/routine estimate: {{ "%.2f"|format(work_intelligence.low_value_minutes / 60) }} hours
+- Delegation candidates noticed today: {{ work_intelligence.delegation_candidates|length }}
+- Process changes captured today: {{ process_changes|length }}
+- Run observations captured today: {{ process_observations|length }}
+- Metrics/results captured today: {{ run_metrics|length }}
+- Secure captures: {{ secure_captures|length }}
+
+## Secretary
+- Completed todos today: {{ completed_todos|length }}
+- Open todos created today: {{ todos_created|selectattr("status", "equalto", "open")|list|length }}
+- Overdue todos: {{ overdue_todos|length }}
+- Upcoming reminders: {{ reminders|length }}
+- Project notes captured today: {{ notes|length }}
+- Decisions captured today: {{ decisions|length }}
+- Meeting action items: {{ action_items|length }}
+- Unassigned notes/todos: {{ unassigned_notes|length }}
+
+## Things To Circle Back On
+- New todos: {{ circle_back.new_todos|length }}
+- New reminders: {{ circle_back.new_reminders|length }}
+- Notes that may need action: {{ circle_back.notes_needing_action|length }}
+- Project notes captured today: {{ circle_back.project_notes|length }}
+- Ideas captured today: {{ circle_back.ideas|length }}
+- Follow-ups captured today: {{ circle_back.followups|length }}
+- Decisions captured today: {{ circle_back.decisions|length }}
+- Unassigned thoughts: {{ circle_back.unassigned_thoughts|length }}
+- Inbox items needing review: {{ circle_back.inbox_items|length }}
+- Overdue todos: {{ circle_back.overdue_todos|length }}
+- Repeatedly snoozed reminders: {{ circle_back.snoozed_reminders|length }}
+
+{% for item in circle_back.inbox_items[:10] -%}
+- Inbox #{{ item.id }}: {{ item.suggested_title or item.raw_text }}
+{% endfor %}
+{% for note in circle_back.notes_needing_action[:10] -%}
+- Note #{{ note.id }} needs action: {{ note.title }}{% if note.project_name %} ({{ note.project_name }}){% endif %}
+{% endfor %}
+
+## Completed Todos
+{% for todo in completed_todos -%}
+- #{{ todo.id }} {{ todo.title }}{% if todo.project_name %} ({{ todo.project_name }}){% endif %}
+{% else -%}
+- None.
+{% endfor %}
+
+## Open And Overdue Todos
+{% for todo in open_todos -%}
+- #{{ todo.id }} {{ todo.title }}{% if todo.due_at %} due {{ todo.due_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}{% if todo.project_name %} ({{ todo.project_name }}){% endif %}
+{% else -%}
+- None.
+{% endfor %}
+
+## Project Notes
+{% for note in notes -%}
+- {{ note.note_type }}{% if note.project_name %} / {{ note.project_name }}{% endif %}: {{ note.body }}
+{% else -%}
+- None.
+{% endfor %}
+
+## Suggested Agenda For Tomorrow
+{% for todo in open_todos[:8] -%}
+- {{ todo.title }}{% if todo.project_name %} ({{ todo.project_name }}){% endif %}
+{% else -%}
+- No open todos to carry forward.
+{% endfor %}
+
+## Suggested Classification Improvements
+{% if unassigned_notes -%}
+- Add aliases for unassigned notes if they belong to active projects.
+{% else -%}
+- No obvious project alias gaps from today's notes.
+{% endif %}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ project.name }} | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0; }
+    h2 { font-size: 17px; margin: 0 0 10px; letter-spacing: 0; }
+    form.inline { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+    button { font: inherit; border: 1px solid #176c74; border-radius: 6px; padding: 7px 8px; background: #176c74; color: #fff; cursor: pointer; }
+    .summary { white-space: pre-wrap; background: #f7f9fa; padding: 12px; border-left: 3px solid #176c74; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 8px 0; font-size: 13px; }
+    .muted { color: #5f6b73; }
+    a { color: #176c74; text-decoration: none; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/dashboard">Dashboard</a>
+    <h1>{{ project.name }}</h1>
+    <div class="muted">{{ project.category_default }} | {{ project.aliases|join(", ") }}</div>
+    <form class="inline" method="post" action="/briefings/generate">
+      <input type="hidden" name="source" value="dashboard">
+      <input type="hidden" name="project_id" value="{{ project.id }}">
+      <input type="hidden" name="topic" value="{{ project.name }}">
+      <input type="hidden" name="briefing_type" value="meeting_prep">
+      <button type="submit">Generate Briefing</button>
+    </form>
+  </header>
+  <main>
+    <section style="grid-column: 1 / -1;">
+      <h2>Status</h2>
+      <div class="summary">{{ summary }}</div>
+      {% if notes_need_action and not has_open_next_action %}
+      <div class="item">This project has notes but no next action.</div>
+      {% endif %}
+      {% if has_open_next_action and not has_recent_time %}
+      <div class="item">This project has open work but no recent time spent.</div>
+      {% endif %}
+      {% if entries and not notes and not has_open_next_action %}
+      <div class="item">Time was spent here, but no next step was captured.</div>
+      {% endif %}
+    </section>
+    <section>
+      <h2>Open And Completed Todos</h2>
+      {% for todo in todos %}
+      <div class="item"><strong>#{{ todo.id }}</strong> {{ todo.title }} <span class="muted">{{ todo.status }}</span></div>
+      {% else %}
+      <div class="item muted">No todos.</div>
+      {% endfor %}
+    </section>
+    <section>
+      <h2>Upcoming Reminders</h2>
+      {% for reminder in reminders %}
+      <div class="item"><strong>#{{ reminder.id }}</strong> {{ reminder.title }} <span class="muted">{{ reminder.status }} {{ reminder.remind_at.strftime("%Y-%m-%d %H:%M") }}</span></div>
+      {% else %}
+      <div class="item muted">No reminders.</div>
+      {% endfor %}
+    </section>
+    <section>
+      <h2>Notes And Decisions</h2>
+      {% for note in notes %}
+      <div class="item"><strong>{{ note.note_type }}</strong> {{ note.body }}</div>
+      {% else %}
+      <div class="item muted">No notes.</div>
+      {% endfor %}
+    </section>
+    <section>
+      <h2>Recent Time</h2>
+      {% for entry in entries %}
+      <div class="item">{{ entry.interval_start.strftime("%Y-%m-%d %H:%M") }} {{ entry.raw_text }} <span class="muted">{{ entry.category_secondary }}</span></div>
+      {% else %}
+      <div class="item muted">No tracked time.</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

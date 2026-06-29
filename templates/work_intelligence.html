@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Work Intelligence | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; min-width: 0; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 9px 0; font-size: 13px; overflow-wrap: anywhere; }
+    .muted { color: #5f6b73; }
+    a { color: #176c74; text-decoration: none; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Work Intelligence</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Project Time Ranking</h2>
+      {% for project, minutes in summary.project_minutes.items() %}
+      <div class="item"><strong>{{ project }}</strong> <span class="muted">{{ "%.1f"|format(minutes / 60) }}h</span></div>
+      {% else %}
+      <div class="item muted">No project time yet.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Work Focus Breakdown</h2>
+      {% for focus, minutes in summary.focus_minutes.items() %}
+      <div class="item"><strong>{{ focus }}</strong> <span class="muted">{{ "%.1f"|format(minutes / 60) }}h</span></div>
+      {% else %}
+      <div class="item muted">No work-focus data yet.</div>
+      {% endfor %}
+      <div class="item">High-value: {{ "%.1f"|format(summary.high_value_minutes / 60) }}h</div>
+      <div class="item">Low-value/admin/routine: {{ "%.1f"|format(summary.low_value_minutes / 60) }}h</div>
+    </section>
+
+    <section>
+      <h2>Delegation Candidates</h2>
+      {% for entry in summary.delegation_candidates[:20] %}
+      <div class="item">{{ entry.raw_text }} <div class="muted">{{ entry.delegation_reason or "" }}</div></div>
+      {% else %}
+      <div class="item muted">No delegation candidates yet.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Staffing Signals</h2>
+      {% for entry in summary.staffing_signals[:20] %}
+      <div class="item">{{ entry.raw_text }} <div class="muted">{{ entry.staffing_signal_reason or "" }}</div></div>
+      {% else %}
+      <div class="item muted">No staffing signals yet.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Process Changes</h2>
+      {% for change in summary.process_changes[:20] %}
+      <div class="item"><strong>{{ change.change_type }}</strong> {{ change.title }}</div>
+      {% else %}
+      <div class="item muted">No process changes captured.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Observations And Metrics</h2>
+      {% for observation in summary.observations[:10] %}
+      <div class="item"><strong>{{ observation.severity }}</strong> {{ observation.title }}</div>
+      {% endfor %}
+      {% for metric in summary.metrics[:10] %}
+      <div class="item"><strong>{{ metric.metric_name }}</strong> {{ metric.metric_value_text }}</div>
+      {% endfor %}
+      {% if not summary.observations and not summary.metrics %}
+      <div class="item muted">No observations or metrics captured.</div>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

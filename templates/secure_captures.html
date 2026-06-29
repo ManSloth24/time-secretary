@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secure Captures | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    form.inline { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+    button { font: inherit; border: 1px solid #176c74; border-radius: 6px; padding: 6px 8px; background: #176c74; color: #fff; cursor: pointer; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 10px 0; font-size: 13px; overflow-wrap: anywhere; }
+    .muted { color: #5f6b73; }
+    .pill { display: inline-block; border: 1px solid #d8dee4; border-radius: 6px; padding: 2px 6px; margin-right: 4px; font-size: 12px; }
+    a { color: #176c74; text-decoration: none; }
+    @media (max-width: 900px) { main { padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Secure Captures</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <div class="muted">Private Shortcut/Tailscale captures stay local.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Recent Secure Captures</h2>
+      {% for capture in captures %}
+      <div class="item">
+        <span class="pill">{{ capture.capture_type }}</span>
+        <span class="pill">{{ capture.processed_status }}</span>
+        <span class="pill">{{ capture.sensitivity }}</span>
+        {% if capture.project_name %}<span class="pill">{{ capture.project_name }}</span>{% endif %}
+        {% if capture.run_name %}<span class="pill">{{ capture.run_name }}</span>{% endif %}
+        <div>{{ capture.text }}</div>
+        <div class="muted">received {{ received_local(capture.received_at).strftime("%Y-%m-%d %H:%M %Z") }}</div>
+        <form class="inline" method="post" action="/briefings/generate">
+          <input type="hidden" name="source" value="dashboard">
+          <input type="hidden" name="secure_capture_id" value="{{ capture.id }}">
+          <input type="hidden" name="briefing_type" value="meeting_prep">
+          <button type="submit">Generate Briefing</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="item muted">No secure captures yet.</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

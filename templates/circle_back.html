@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Circle Back | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0; }
+    h2 { margin: 0 0 10px; font-size: 17px; letter-spacing: 0; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 9px 0; font-size: 13px; }
+    .muted { color: #5f6b73; }
+    .warn { color: #9a3412; }
+    a { color: #176c74; text-decoration: none; }
+    form.inline { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    input, select, button { font: inherit; border: 1px solid #d8dee4; border-radius: 6px; padding: 7px 8px; }
+    button { background: #176c74; border-color: #176c74; color: #fff; cursor: pointer; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Circle Back</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <div class="muted">Captured items stay here until reviewed, converted, completed, or dismissed.</div>
+  </header>
+  <main>
+    <section>
+      <h2>Open Secretary Inbox</h2>
+      {% for item in context.inbox_items %}
+      <div class="item">
+        <strong>#{{ item.id }}</strong> {{ item.suggested_title or item.raw_text }}
+        <div class="muted">{{ item.interpreted_type or "Review" }}{% if item.suggested_project_name %} | {{ item.suggested_project_name }}{% endif %}{% if item.next_review_at %} | review {{ item.next_review_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}</div>
+        <form class="inline" method="post" action="/dashboard/circle-back/action">
+          <input type="hidden" name="item_type" value="inbox">
+          <input type="hidden" name="id" value="{{ item.id }}">
+          <select name="action" aria-label="Action">
+            <option value="todo">Convert to todo</option>
+            <option value="reminder">Convert to reminder</option>
+            <option value="assign">Assign project</option>
+            <option value="dismiss">Dismiss</option>
+          </select>
+          <input name="project_name" placeholder="Project">
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="item muted">Inbox is clear.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Notes Needing Action</h2>
+      {% for note in notes_without_action %}
+      <div class="item">
+        <strong>#{{ note.id }}</strong> {{ note.title }}
+        <div class="muted">{{ note.note_type }}{% if note.project_name %} | {{ note.project_name }}{% endif %}{% if note.next_review_at %} | review {{ note.next_review_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}</div>
+        <form class="inline" method="post" action="/dashboard/circle-back/action">
+          <input type="hidden" name="item_type" value="note">
+          <input type="hidden" name="id" value="{{ note.id }}">
+          <select name="action" aria-label="Action">
+            <option value="todo">Convert to todo</option>
+            <option value="reminder">Convert to reminder</option>
+            <option value="assign">Assign project</option>
+            <option value="dismiss">Dismiss</option>
+          </select>
+          <input name="project_name" placeholder="Project">
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="item muted">No notes need action.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Todos Without Due Dates</h2>
+      {% for todo in todos_without_due %}
+      <div class="item">
+        <strong>#{{ todo.id }}</strong> {{ todo.title }}
+        <div class="muted">{{ todo.priority }}{% if todo.project_name %} | {{ todo.project_name }}{% endif %}{% if todo.next_review_at %} | review {{ todo.next_review_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}</div>
+        <form class="inline" method="post" action="/dashboard/circle-back/action">
+          <input type="hidden" name="item_type" value="todo">
+          <input type="hidden" name="id" value="{{ todo.id }}">
+          <select name="action" aria-label="Action">
+            <option value="done">Mark done</option>
+            <option value="dismiss">Dismiss</option>
+          </select>
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="item muted">Every open todo has a due date or review date.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Snoozed And Stale</h2>
+      {% for reminder in context.snoozed_reminders %}
+      <div class="item">
+        <strong>Reminder #{{ reminder.id }}</strong> {{ reminder.title }}
+        <div class="muted">{{ reminder.status }} | snoozed {{ reminder.snooze_count }}{% if reminder.remind_at %} | {{ reminder.remind_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}</div>
+        <form class="inline" method="post" action="/dashboard/circle-back/action">
+          <input type="hidden" name="item_type" value="reminder">
+          <input type="hidden" name="id" value="{{ reminder.id }}">
+          <select name="action" aria-label="Action">
+            <option value="done">Mark done</option>
+            <option value="dismiss">Dismiss</option>
+          </select>
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+      {% endfor %}
+      {% for item in context.stale_inbox_items %}
+      <div class="item warn">Stale inbox #{{ item.id }}: {{ item.suggested_title or item.raw_text }}</div>
+      {% endfor %}
+      {% if not context.snoozed_reminders and not context.stale_inbox_items %}
+      <div class="item muted">No snoozed or stale items.</div>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Today Captured</h2>
+      <div class="item">New todos: {{ context.new_todos|length }}</div>
+      <div class="item">New reminders: {{ context.new_reminders|length }}</div>
+      <div class="item">Project notes: {{ context.project_notes|length }}</div>
+      <div class="item">Ideas: {{ context.ideas|length }}</div>
+      <div class="item">Follow-ups: {{ context.followups|length }}</div>
+      <div class="item">Decisions: {{ context.decisions|length }}</div>
+    </section>
+
+    <section>
+      <h2>Unassigned</h2>
+      {% for item in context.unassigned_thoughts %}
+      <div class="item">Inbox #{{ item.id }}: {{ item.suggested_title or item.raw_text }}</div>
+      {% else %}
+      <div class="item muted">No unassigned inbox items.</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

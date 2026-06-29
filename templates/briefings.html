@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Briefings | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    form.inline { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    input, select, button { font: inherit; border: 1px solid #d8dee4; border-radius: 6px; padding: 7px 8px; background: #fff; color: #1d252c; }
+    button { background: #176c74; border-color: #176c74; color: #fff; cursor: pointer; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 10px 0; font-size: 13px; overflow-wrap: anywhere; }
+    .muted { color: #5f6b73; }
+    .pill { display: inline-block; border: 1px solid #d8dee4; border-radius: 6px; padding: 2px 6px; margin-right: 4px; font-size: 12px; }
+    a { color: #176c74; text-decoration: none; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Briefings</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <form class="inline" method="post" action="/briefings/generate">
+      <input type="hidden" name="source" value="dashboard">
+      <input name="topic" placeholder="Topic, project, or run">
+      <select name="briefing_type" aria-label="Briefing type">
+        <option value="meeting_prep">Meeting Prep</option>
+        <option value="project">Project</option>
+        <option value="run">Run</option>
+        <option value="topic">Topic</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label class="muted"><input type="checkbox" name="include_sensitive" value="true"> Sensitive</label>
+      <button type="submit">Generate</button>
+    </form>
+  </header>
+  <main>
+    <section>
+      <h2>Generated Briefings</h2>
+      {% for report in reports %}
+      <div class="item">
+        <span class="pill">{{ report.briefing_type }}</span>
+        <span class="pill">{{ report.generation_mode or "deterministic" }}</span>
+        {% if report.includes_sensitive %}<span class="pill">sensitive</span>{% endif %}
+        {% if report.project_name %}<span class="pill">{{ report.project_name }}</span>{% endif %}
+        {% if report.run_name %}<span class="pill">{{ report.run_name }}</span>{% endif %}
+        <div><a href="{{ report.local_dashboard_path }}"><strong>{{ report.topic or report.project_name or report.run_name or report.opaque_id }}</strong></a></div>
+        <div class="muted">{{ local_dt(report.generated_at) }} | {{ local_url(report) }}</div>
+      </div>
+      {% else %}
+      <div class="item muted">No briefings generated yet.</div>
+      {% endfor %}
+    </section>
+    <section>
+      <h2>Recent Requests</h2>
+      {% for briefing_request in requests %}
+      <div class="item">
+        <span class="pill">{{ briefing_request.request_source }}</span>
+        <span class="pill">{{ briefing_request.status }}</span>
+        <div>{{ briefing_request.request_text }}</div>
+        <div class="muted">{{ local_dt(briefing_request.requested_at) }}</div>
+      </div>
+      {% else %}
+      <div class="item muted">No briefing requests yet.</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

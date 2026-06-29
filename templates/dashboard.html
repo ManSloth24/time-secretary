@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Secretary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d252c;
+      --muted: #5f6b73;
+      --line: #d8dee4;
+      --panel: #f7f9fa;
+      --accent: #176c74;
+      --warn: #9a3412;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    h3 { font-size: 14px; }
+    main {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+      padding: 20px 24px 36px;
+    }
+    section {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      margin-top: 16px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .metric {
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+      min-height: 52px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    form.inline {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    input, select, button {
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 7px 8px;
+      background: #fff;
+      color: var(--ink);
+    }
+    button {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+    .side {
+      min-width: 0;
+    }
+    .item {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 0;
+      font-size: 13px;
+    }
+    .muted { color: var(--muted); }
+    .warn { color: var(--warn); }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      .summary { grid-template-columns: repeat(2, 1fr); padding: 12px 16px; }
+      header { padding: 16px; align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Time Secretary</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <div class="toolbar">
+      <form class="inline" method="post" action="/reports/generate">
+        <input type="hidden" name="return_to" value="/dashboard">
+        <select name="report_type" aria-label="Report type">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <button type="submit">Generate</button>
+      </form>
+      <a href="/dashboard/circle-back">Circle Back</a>
+      <a href="/dashboard/work-hours">Work Hours</a>
+      <a href="/dashboard/work-intelligence">Work Intelligence</a>
+      <a href="/dashboard/briefings">Briefings</a>
+      <a href="/dashboard/secure-captures">Secure Captures</a>
+      <a href="/dashboard/settings">Settings</a>
+      <a href="/dashboard/export.csv">Export CSV</a>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="metric"><span class="muted">Work</span><strong>{{ "%.1f"|format(work_hours) }}h</strong></div>
+    <div class="metric"><span class="muted">Home</span><strong>{{ "%.1f"|format(home_hours) }}h</strong></div>
+    <div class="metric"><span class="muted">Open Todos</span><strong>{{ todos|length }}</strong></div>
+    <div class="metric"><span class="muted">Inbox</span><strong>{{ inbox|length }}</strong></div>
+  </div>
+
+  <main>
+    <div>
+      <section>
+        <h2>Today</h2>
+        <table>
+          <thead>
+            <tr><th style="width: 120px;">Time</th><th>Entry</th><th style="width: 150px;">Category</th><th style="width: 160px;">Project</th><th style="width: 220px;">Correct</th></tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+            <tr>
+              <td>{{ entry.interval_start.strftime("%H:%M") }}-{{ entry.interval_end.strftime("%H:%M") }}</td>
+              <td>{{ entry.raw_text }}</td>
+              <td>{{ entry.category_primary }}/{{ entry.category_secondary }}</td>
+              <td>{{ entry.project_name or "" }}</td>
+              <td>
+                <form class="inline" method="post" action="/entries/{{ entry.id }}/correct">
+                  <input type="hidden" name="return_to" value="/dashboard">
+                  <select name="category_primary" aria-label="Category">
+                    <option value="{{ entry.category_primary }}">{{ entry.category_primary }}</option>
+                    <option>Work</option>
+                    <option>Home</option>
+                    <option>Unknown</option>
+                  </select>
+                  <input name="project_name" value="{{ entry.project_name or '' }}" placeholder="Project">
+                  <button type="submit">Save</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="muted">No entries yet today.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Secretary Inbox</h2>
+        {% for item in inbox %}
+        <div class="item">
+          <strong>#{{ item.id }}</strong> {{ item.raw_text }}
+          <form class="inline" method="post" action="/dashboard/inbox/{{ item.id }}/convert">
+            <select name="target" aria-label="Convert to">
+              <option value="note">Note</option>
+              <option value="todo">Todo</option>
+              <option value="reminder">Reminder</option>
+              <option value="time">Time</option>
+            </select>
+            <button type="submit">Convert</button>
+          </form>
+        </div>
+        {% else %}
+        <div class="item muted">Inbox is clear.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Projects</h2>
+        <form class="inline" method="post" action="/projects">
+          <input type="hidden" name="return_to" value="/dashboard">
+          <input name="name" placeholder="Project name">
+          <input name="aliases" placeholder="Aliases, comma separated">
+          <select name="category_default" aria-label="Default category">
+            <option>Work</option>
+            <option>Home</option>
+            <option>Unknown</option>
+          </select>
+          <button type="submit">Add</button>
+        </form>
+        {% for project in projects %}
+        <div class="item">
+          <a href="/dashboard/projects/{{ project.id }}"><strong>{{ project.name }}</strong></a>
+          <span class="muted">{{ project.category_default }} | {{ project.aliases|join(", ") }}</span>
+          <form class="inline" method="post" action="/projects/{{ project.id }}/aliases">
+            <input type="hidden" name="return_to" value="/dashboard">
+            <input name="aliases" placeholder="New aliases">
+            <button type="submit">Alias</button>
+          </form>
+        </div>
+        {% endfor %}
+      </section>
+    </div>
+
+    <div class="side">
+      <section>
+        <h2>Todos</h2>
+        {% for todo in todos %}
+        <div class="item">
+          <strong>#{{ todo.id }}</strong> {{ todo.title }}
+          <div class="muted">{{ todo.priority }} | {{ todo.category_primary }}{% if todo.project_name %} | {{ todo.project_name }}{% endif %}{% if todo.due_at %} | due {{ todo.due_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}</div>
+        </div>
+        {% else %}
+        <div class="item muted">No open todos.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Reminders</h2>
+        {% for reminder in reminders %}
+        <div class="item">
+          <strong>#{{ reminder.id }}</strong> {{ reminder.title }}
+          <div class="muted">{{ reminder.status }} | {{ reminder.remind_at.strftime("%Y-%m-%d %H:%M") }}</div>
+        </div>
+        {% else %}
+        <div class="item muted">No active reminders.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Project Notes</h2>
+        {% for note in notes %}
+        <div class="item">
+          <strong>{{ note.note_type }}</strong> {{ note.title }}
+          <div class="muted">{{ note.project_name or "Unassigned" }}</div>
+        </div>
+        {% else %}
+        <div class="item muted">No project notes yet.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Project Allocation</h2>
+        {% for name, hours in project_hours.items() %}
+        <div class="item"><strong>{{ name }}</strong> <span class="muted">{{ "%.1f"|format(hours) }}h today</span></div>
+        {% else %}
+        <div class="item muted">No assigned project time today.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Missed Check-ins</h2>
+        {% for prompt in missed %}
+        <div class="item warn">{{ prompt.scheduled_for_start.strftime("%H:%M") }}-{{ prompt.scheduled_for_end.strftime("%H:%M") }}</div>
+        {% else %}
+        <div class="item muted">None today.</div>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Reports</h2>
+        {% for path in report_paths[-8:] %}
+        <div class="item">{{ path.name }}</div>
+        {% else %}
+        <div class="item muted">No reports generated yet.</div>
+        {% endfor %}
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,50 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+tokens/
+
+# Local databases and app data
+*.db
+*.sqlite
+*.sqlite3
+/data/
+/instance/
+
+# Reports, backups, exports
+/reports/
+/backups/
+/exports/
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# IDE / system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+logs/
+tmp/
+temp/

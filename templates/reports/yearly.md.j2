@@ -1,0 +1,50 @@
+# Year-To-Date Report - {{ period_start.strftime("%Y") }}
+
+## Executive Summary
+{{ narrative }}
+
+## Work Hours Ledger
+- Year-to-date logged work hours: {{ "%.2f"|format(work_hours.logged_work_minutes / 60) }}
+- Year-to-date worksite hours: {{ "%.2f"|format(work_hours.worksite_duration_minutes / 60) }}
+- Workdays counted: {{ work_hours.summaries|length }}
+- Average workday length: {% if work_hours.summaries %}{{ "%.2f"|format((work_hours.worksite_duration_minutes / 60) / work_hours.summaries|length) }}{% else %}0.00{% endif %}
+- Missing data count: {{ work_hours.missing_event_count }}
+
+## Project Allocation
+{% for project, minutes in minutes_by_project.most_common() -%}
+- {{ project }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No assigned project time.
+{% endfor %}
+
+## Work Focus Trends
+{% for focus, minutes in work_intelligence.focus_minutes.items() -%}
+- {{ focus }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No focus data.
+{% endfor %}
+
+## Value Mix
+- High-value work: {{ "%.2f"|format(work_intelligence.high_value_minutes / 60) }} hours
+- Low-value/admin/routine work: {{ "%.2f"|format(work_intelligence.low_value_minutes / 60) }} hours
+
+## Delegation And Staffing Evidence
+- Delegation candidates: {{ work_intelligence.delegation_candidates|length }}
+- Staffing signals: {{ work_intelligence.staffing_signals|length }}
+
+{% for entry in work_intelligence.delegation_candidates[:15] -%}
+- Delegation candidate: {{ entry.raw_text }}{% if entry.project_name %} ({{ entry.project_name }}){% endif %}
+{% endfor %}
+
+## Process And Run Evidence
+- Process changes: {{ process_changes|length }}
+- Observations: {{ process_observations|length }}
+- Metrics/results: {{ run_metrics|length }}
+- Secure captures: {{ secure_captures|length }}
+
+## Missing Data Summary
+{% for summary in work_hours.summaries if summary.missing_arrival_event or summary.missing_leave_event -%}
+- {{ summary.date }}: missing{% if summary.missing_arrival_event %} arrival{% endif %}{% if summary.missing_leave_event %} leave{% endif %}
+{% else -%}
+- No missing arrival/leave events in generated summaries.
+{% endfor %}

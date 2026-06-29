@@ -1,0 +1,88 @@
+# Weekly Report - {{ period_start.date() }} to {{ period_end_inclusive.date() }}
+
+## Executive Summary
+{{ narrative }}
+
+## Time Split
+- Total tracked hours: {{ "%.2f"|format(total_hours) }}
+- Work: {{ "%.2f"|format(minutes_by_primary["Work"] / 60) }}
+- Home: {{ "%.2f"|format(minutes_by_primary["Home"] / 60) }}
+- Unknown: {{ "%.2f"|format(minutes_by_primary["Unknown"] / 60) }}
+- Worksite duration: {{ "%.2f"|format(work_hours.worksite_duration_minutes / 60) }}
+- Average daily logged work: {% if work_hours.summaries %}{{ "%.2f"|format((work_hours.logged_work_minutes / 60) / (work_hours.summaries|length)) }}{% else %}0.00{% endif %}
+- Missing work-hour events: {{ work_hours.missing_event_count }}
+
+## Project Allocation
+{% for project, minutes in minutes_by_project.most_common() -%}
+- {{ project }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No assigned project time.
+{% endfor %}
+
+## Top Categories
+{% for category, minutes in minutes_by_secondary.most_common() -%}
+- {{ category }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No category data.
+{% endfor %}
+
+## Todos And Secretary Review
+- Todos completed this week: {{ completed_todos|length }}
+- Todos still open: {{ open_todos|length }}
+- Overdue items: {{ overdue_todos|length }}
+- Project notes captured: {{ notes|length }}
+- Repeated reminders or snoozed items: {{ reminders|selectattr("status", "equalto", "snoozed")|list|length }}
+- Things mentioned but not acted on: {{ circle_back.stale_notes|length + circle_back.stale_inbox_items|length }}
+- Ideas captured but never reviewed: {{ circle_back.ideas|selectattr("last_reviewed_at", "none")|list|length }}
+- Unassigned notes still open: {{ circle_back.unassigned_thoughts|length }}
+
+## Work Intelligence
+- Strategic/high-value work: {{ "%.2f"|format(work_intelligence.high_value_minutes / 60) }} hours
+- Low-value/admin/routine burden: {{ "%.2f"|format(work_intelligence.low_value_minutes / 60) }} hours
+- Delegation candidates: {{ work_intelligence.delegation_candidates|length }}
+- Staffing signals: {{ work_intelligence.staffing_signals|length }}
+- Process changes captured: {{ process_changes|length }}
+- Run observations captured: {{ process_observations|length }}
+- Run metrics captured: {{ run_metrics|length }}
+
+## Delegation Candidates
+{% for entry in work_intelligence.delegation_candidates[:10] -%}
+- {{ entry.raw_text }}{% if entry.project_name %} ({{ entry.project_name }}){% endif %}
+{% else -%}
+- None noticed this week.
+{% endfor %}
+
+## Open Todos
+{% for todo in open_todos -%}
+- #{{ todo.id }} {{ todo.title }}{% if todo.project_name %} ({{ todo.project_name }}){% endif %}
+{% else -%}
+- None.
+{% endfor %}
+
+## Project Progress Summaries
+{% for note in notes -%}
+- {{ note.project_name or "Unassigned" }}: {{ note.title }}
+{% else -%}
+- No project notes captured.
+{% endfor %}
+
+## Suggested Priorities For Next Week
+{% for todo in overdue_todos[:10] -%}
+- Resolve overdue item #{{ todo.id }}: {{ todo.title }}
+{% else -%}
+- Review projects with time spent but no next action.
+{% endfor %}
+
+## Repeated Unresolved Topics
+{% for item in circle_back.stale_inbox_items[:10] -%}
+- Inbox #{{ item.id }}: {{ item.suggested_title or item.raw_text }}
+{% else -%}
+- No stale inbox topics.
+{% endfor %}
+
+## Oldest Open Todos
+{% for todo in open_todos[:10] -%}
+- #{{ todo.id }} {{ todo.title }}{% if todo.due_at %} due {{ todo.due_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}
+{% else -%}
+- None.
+{% endfor %}

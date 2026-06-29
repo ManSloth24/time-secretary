@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Briefing | Time Secretary</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1d252c; background: #fff; }
+    header { border-bottom: 1px solid #d8dee4; padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { display: grid; grid-template-columns: 1.6fr .9fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid #d8dee4; padding-top: 14px; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f7f9fa; border-left: 3px solid #176c74; padding: 12px; font: 13px "Segoe UI", Arial, sans-serif; line-height: 1.45; }
+    .item { border-bottom: 1px solid #d8dee4; padding: 8px 0; font-size: 13px; overflow-wrap: anywhere; }
+    .muted { color: #5f6b73; }
+    .pill { display: inline-block; border: 1px solid #d8dee4; border-radius: 6px; padding: 2px 6px; margin-right: 4px; font-size: 12px; }
+    a { color: #176c74; text-decoration: none; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard/briefings">Briefings</a>
+      <h1>{{ report.topic or report.project_name or report.run_name or "Briefing" }}</h1>
+      <div class="muted">{{ local_dt(report.generated_at) }} | {{ local_url }}</div>
+    </div>
+    <div>
+      <a href="/dashboard/briefings/{{ report.opaque_id }}/export.md">Export Markdown</a>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Full Local Briefing</h2>
+      <pre>{{ report.full_text }}</pre>
+    </section>
+    <section>
+      <h2>Metadata</h2>
+      <div class="item">
+        <span class="pill">{{ report.briefing_type }}</span>
+        <span class="pill">{{ report.generation_mode or "deterministic" }}</span>
+        {% if report.includes_sensitive %}<span class="pill">sensitive</span>{% endif %}
+        {% if report.project_name %}<span class="pill">{{ report.project_name }}</span>{% endif %}
+        {% if report.run_name %}<span class="pill">{{ report.run_name }}</span>{% endif %}
+      </div>
+      {% if report.llm_model or report.llm_duration_ms or report.fact_pack_path %}
+      <div class="item">
+        <strong>Report engine</strong><br>
+        {% if report.llm_model %}Model: {{ report.llm_model }}<br>{% endif %}
+        {% if report.llm_duration_ms is not none %}Generation: {{ report.llm_duration_ms }} ms<br>{% endif %}
+        {% if report.fact_pack_path %}<span class="muted">Fact pack saved locally.</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if source_request %}
+      <div class="item"><strong>Source request</strong><br>{{ source_request.request_text }}<div class="muted">{{ source_request.request_source }}</div></div>
+      {% endif %}
+      <h2>Related Actions</h2>
+      {% for todo in todos %}
+      <div class="item">Todo #{{ todo.id }} {{ todo.title }} <span class="muted">{{ todo.status }}</span></div>
+      {% else %}
+      <div class="item muted">No related todos.</div>
+      {% endfor %}
+      {% for reminder in reminders %}
+      <div class="item">Reminder #{{ reminder.id }} {{ reminder.title }} <span class="muted">{{ local_dt(reminder.remind_at) }}</span></div>
+      {% endfor %}
+      <h2>Related Runs And Changes</h2>
+      {% for change in changes %}
+      <div class="item">Change #{{ change.id }} {{ change.title }}</div>
+      {% else %}
+      <div class="item muted">No related changes.</div>
+      {% endfor %}
+      {% for observation in observations %}
+      <div class="item">Observation #{{ observation.id }} {{ observation.title }}</div>
+      {% endfor %}
+      {% for metric in metrics %}
+      <div class="item">Metric #{{ metric.id }} {{ metric.metric_name }}: {{ metric.metric_value_text }}</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

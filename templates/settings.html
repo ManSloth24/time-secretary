@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings | Time Secretary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d252c;
+      --muted: #5f6b73;
+      --line: #d8dee4;
+      --panel: #f7f9fa;
+      --accent: #176c74;
+      --warn: #9a3412;
+    }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); background: #fff; }
+    header { border-bottom: 1px solid var(--line); padding: 18px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px 36px; }
+    section { border-top: 1px solid var(--line); padding-top: 14px; min-width: 0; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: top; font-size: 13px; overflow-wrap: anywhere; }
+    th { color: var(--muted); font-weight: 600; width: 170px; }
+    form.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button { font: inherit; border: 1px solid var(--accent); border-radius: 6px; padding: 7px 9px; background: var(--accent); color: #fff; cursor: pointer; }
+    .muted { color: var(--muted); }
+    .warn { color: var(--warn); }
+    .notice { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 24px; font-size: 13px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .item { border-bottom: 1px solid var(--line); padding: 9px 0; font-size: 13px; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 16px; } .notice { padding: 10px 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <h1>Settings</h1>
+      <div class="muted">{{ now.strftime("%A, %Y-%m-%d %H:%M") }}</div>
+    </div>
+    <form class="inline" method="post" action="/dashboard/settings/action">
+      <button type="submit" name="action" value="backup">Backup</button>
+      <button type="submit" name="action" value="daily_report">Daily Report</button>
+      <button type="submit" name="action" value="test_llm">Test LLM</button>
+      <button type="submit" name="action" value="test_llm_report_model">Test Report Model</button>
+      <button type="submit" name="action" value="benchmark_llm_reports">Benchmark</button>
+    </form>
+  </header>
+
+  {% if notice %}
+  <div class="notice">{{ notice }}</div>
+  {% endif %}
+
+  <main>
+    <section>
+      <h2>Deployment</h2>
+      <table>
+        <tbody>
+          <tr><th>Environment</th><td>{{ settings.app_env }}</td></tr>
+          <tr><th>Mode</th><td>{{ settings.deployment_mode }}</td></tr>
+          <tr><th>Timezone</th><td>{{ settings.app_timezone }}</td></tr>
+          <tr><th>Scheduler</th><td>{{ "on" if settings.start_scheduler else "off" }}</td></tr>
+          <tr><th>Quiet Mode</th><td>{{ "on" if settings.quiet_mode else "off" }}</td></tr>
+          <tr><th>Active Hours</th><td>{{ settings.active_start_time }}-{{ settings.active_end_time }}</td></tr>
+          <tr><th>Check-ins</th><td>{{ settings.checkin_interval_minutes }} min</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Storage</h2>
+      <table>
+        <tbody>
+          <tr><th>Database</th><td>{{ database_path }} <span class="{{ '' if database_exists else 'warn' }}">{{ "ready" if database_exists else "missing" }}</span></td></tr>
+          <tr><th>Reports</th><td>{{ reports_path }} <span class="{{ '' if reports_exists else 'muted' }}">{{ "ready" if reports_exists else "empty" }}</span></td></tr>
+          <tr><th>Backups</th><td>{{ backups_path }} <span class="{{ '' if backups_exists else 'muted' }}">{{ "ready" if backups_exists else "empty" }}</span></td></tr>
+          <tr><th>Backup Time</th><td>{{ settings.backup_time }}</td></tr>
+          <tr><th>Retention</th><td>{{ settings.backup_retention_days }} days</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>SMS</h2>
+      <table>
+        <tbody>
+          <tr><th>Provider</th><td>{{ settings.sms_provider }}</td></tr>
+          <tr><th>Dev SMS</th><td>{{ "on" if settings.effective_dev_sms else "off" }}</td></tr>
+          <tr><th>User Phone</th><td>{{ masked_user_phone }}</td></tr>
+          <tr><th>Twilio SID</th><td>{{ masked_twilio_sid }}</td></tr>
+          <tr><th>Twilio From</th><td>{{ masked_twilio_from }}</td></tr>
+          <tr><th>Signature Check</th><td>{{ "on" if settings.require_twilio_signature_validation else "off" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>LLM</h2>
+      <table>
+        <tbody>
+          <tr><th>Enabled</th><td>{{ "on" if settings.llm_enabled else "off" }}</td></tr>
+          <tr><th>Provider</th><td>{{ settings.llm_provider }}</td></tr>
+          <tr><th>Model</th><td>{{ settings.llm_model or "not set" }}</td></tr>
+          <tr><th>Base URL</th><td>{{ settings.llm_base_url }}</td></tr>
+          <tr><th>Timeout</th><td>{{ settings.llm_timeout_seconds }} sec</td></tr>
+          <tr><th>Low Confidence</th><td>{{ "only" if settings.llm_use_for_low_confidence_only else "all natural SMS" }}</td></tr>
+          <tr><th>Raw Responses</th><td>{{ "saved" if settings.llm_save_raw_responses else "not saved" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>LLM Reports</h2>
+      <table>
+        <tbody>
+          <tr><th>Enabled</th><td>{{ "on" if settings.llm_reports_enabled else "off" }}</td></tr>
+          <tr><th>Provider</th><td>{{ settings.llm_report_provider }}</td></tr>
+          <tr><th>Model</th><td>{{ settings.llm_report_model or "not set" }}</td></tr>
+          <tr><th>Ollama</th><td>{{ "available" if report_llm_status.ollama_available else "unavailable" }}</td></tr>
+          <tr><th>Installed Models</th><td>{{ report_llm_status.installed_models | join(", ") if report_llm_status.installed_models else "none detected" }}</td></tr>
+          <tr><th>Timeout</th><td>{{ settings.llm_report_timeout_seconds }} sec</td></tr>
+          <tr><th>Max Input</th><td>{{ settings.llm_report_max_input_chars }} chars</td></tr>
+          <tr><th>Max Output</th><td>{{ settings.llm_report_max_output_tokens }} tokens</td></tr>
+          <tr><th>Temperature</th><td>{{ settings.llm_report_temperature }}</td></tr>
+          <tr><th>Structured Output</th><td>{{ "on" if settings.llm_report_use_structured_output else "off" }}</td></tr>
+          <tr><th>Cache</th><td>{{ "on" if settings.llm_report_cache_enabled else "off" }}</td></tr>
+          <tr><th>Validation</th><td>{{ "on" if settings.llm_report_validate_claims else "off" }}</td></tr>
+          <tr><th>Sensitive Local Reports</th><td>{{ "allowed" if settings.include_sensitive_local_reports else "blocked" }}</td></tr>
+          <tr><th>Last Generation</th><td>{% if report_llm_status.last_generation_at %}{{ report_llm_status.last_generation_at.strftime("%Y-%m-%d %H:%M") }} | {{ "ok" if report_llm_status.last_generation_success else "failed" }}{% else %}none{% endif %}</td></tr>
+          <tr><th>Average Time</th><td>{% if report_llm_status.avg_generation_ms is not none %}{{ report_llm_status.avg_generation_ms }} ms{% else %}none{% endif %}</td></tr>
+          <tr><th>Last Failure</th><td>{{ report_llm_status.last_failure_reason or "none" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Secure Capture</h2>
+      <table>
+        <tbody>
+          <tr><th>Enabled</th><td>{{ "on" if settings.secure_capture_enabled else "off" }}</td></tr>
+          <tr><th>Token</th><td>{{ "set" if settings.secure_capture_token else "not set" }}</td></tr>
+          <tr><th>Tailscale Only</th><td>{{ "on" if settings.tailscale_only_mode else "off" }}</td></tr>
+          <tr><th>LLM Work Notes</th><td>{{ "allowed" if settings.llm_allow_work_notes else "blocked" }}</td></tr>
+          <tr><th>Secure LLM</th><td>{{ "allowed" if settings.secure_capture_allow_llm else "blocked" }}</td></tr>
+          <tr><th>Body Logging</th><td>{{ "on" if settings.log_secure_capture_body else "off" }}</td></tr>
+          <tr><th>Sensitive Export</th><td>{{ "full text" if settings.export_include_sensitive else "redacted" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Recent LLM Calls</h2>
+      {% for call in recent_llm_calls %}
+      <div class="item">
+        <strong>#{{ call.id }}</strong> {{ call.provider }}{% if call.model %} / {{ call.model }}{% endif %}
+        <div class="muted">{{ call.task_type }} | {{ "ok" if call.success else "failed" }}{% if call.duration_ms is not none %} | {{ call.duration_ms }} ms{% endif %}</div>
+        {% if call.error_message %}<div class="warn">{{ call.error_message }}</div>{% endif %}
+      </div>
+      {% else %}
+      <div class="item muted">No LLM calls recorded.</div>
+      {% endfor %}
+    </section>
+
+    <section>
+      <h2>Briefings</h2>
+      <table>
+        <tbody>
+          <tr><th>Enabled</th><td>{{ "on" if settings.briefings_enabled else "off" }}</td></tr>
+          <tr><th>Default Window</th><td>{{ settings.briefing_default_window_days }} days</td></tr>
+          <tr><th>SMS Mode</th><td>{{ "link only" if settings.briefing_sms_link_only else "summary allowed" }}</td></tr>
+          <tr><th>Opaque Links</th><td>{{ "on" if settings.briefing_use_opaque_ids else "off" }}</td></tr>
+          <tr><th>Sensitive Default</th><td>{{ "included" if settings.briefing_include_sensitive_default else "excluded" }}</td></tr>
+          <tr><th>Reports Dir</th><td>{{ settings.briefing_reports_dir }}</td></tr>
+          <tr><th>Tailscale Base URL</th><td>{{ settings.briefing_tailscale_base_url or "not set" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Reports</h2>
+      <table>
+        <tbody>
+          <tr><th>Daily</th><td>{{ settings.daily_report_time }}</td></tr>
+          <tr><th>Weekly</th><td>{{ settings.weekly_report_day }} {{ settings.weekly_report_time }}</td></tr>
+          <tr><th>Monthly</th><td>{{ settings.monthly_report_time }}</td></tr>
+          <tr><th>SMS Reports</th><td>{{ "on" if settings.send_reports_by_sms else "off" }}</td></tr>
+          <tr><th>Disk Reports</th><td>{{ "on" if settings.save_reports_to_disk else "off" }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

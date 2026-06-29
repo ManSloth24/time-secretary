@@ -1,0 +1,67 @@
+# Monthly Report - {{ period_start.strftime("%Y-%m") }}
+
+## Executive Summary
+{{ narrative }}
+
+## Totals
+- Total tracked hours: {{ "%.2f"|format(total_hours) }}
+- Work: {{ "%.2f"|format(minutes_by_primary["Work"] / 60) }}
+- Home: {{ "%.2f"|format(minutes_by_primary["Home"] / 60) }}
+- Unknown: {{ "%.2f"|format(minutes_by_primary["Unknown"] / 60) }}
+- Worksite hours: {{ "%.2f"|format(work_hours.worksite_duration_minutes / 60) }}
+- Workdays counted: {{ work_hours.summaries|length }}
+- Average workday: {% if work_hours.summaries %}{{ "%.2f"|format((work_hours.worksite_duration_minutes / 60) / (work_hours.summaries|length)) }}{% else %}0.00{% endif %}
+- Missing work-hour events: {{ work_hours.missing_event_count }}
+
+## Project Totals
+{% for project, minutes in minutes_by_project.most_common() -%}
+- {{ project }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No assigned project time.
+{% endfor %}
+
+## Category Totals
+{% for category, minutes in minutes_by_secondary.most_common() -%}
+- {{ category }}: {{ "%.2f"|format(minutes / 60) }} hours
+{% else -%}
+- No category totals.
+{% endfor %}
+
+## Project And Secretary Review
+- Major project progress notes: {{ notes|length }}
+- Todo completion count: {{ completed_todos|length }}
+- Aging open todos: {{ open_todos|length }}
+- Major decisions: {{ decisions|length }}
+- Recurring unresolved issues: {{ notes|selectattr("note_type", "equalto", "risk")|list|length }}
+- Long-term unresolved items: {{ circle_back.stale_todos|length + circle_back.stale_notes|length + circle_back.stale_inbox_items|length }}
+- Repeatedly deferred ideas: {{ circle_back.ideas|selectattr("review_count", "gt", 0)|list|length }}
+- Items dismissed or completed are tracked in todo/reminder/note capture statuses.
+
+## Work Intelligence
+- High-level contribution trend: {{ "%.2f"|format(work_intelligence.high_value_minutes / 60) }} high-value hours
+- Admin/reactive and routine burden: {{ "%.2f"|format(work_intelligence.low_value_minutes / 60) }} low-value hours
+- Delegation candidates: {{ work_intelligence.delegation_candidates|length }}
+- Staffing signals: {{ work_intelligence.staffing_signals|length }}
+- Repeated bottlenecks: {{ work_intelligence.staffing_signals|length + work_intelligence.delegation_candidates|length }}
+- Projects with changes/results captured: {{ process_changes|length + process_observations|length + run_metrics|length }}
+
+## Staffing Signals
+{% for entry in work_intelligence.staffing_signals[:10] -%}
+- {{ entry.raw_text }}{% if entry.staffing_signal_reason %}: {{ entry.staffing_signal_reason }}{% endif %}
+{% else -%}
+- None recorded this month.
+{% endfor %}
+
+## Major Decisions
+{% for note in decisions -%}
+- {{ note.project_name or "Unassigned" }}: {{ note.body }}
+{% else -%}
+- None recorded.
+{% endfor %}
+
+## Monthly Review
+{% for todo in open_todos[:12] -%}
+- Review open item #{{ todo.id }}: {{ todo.title }}{% if todo.project_name %} ({{ todo.project_name }}){% endif %}
+{% else -%}
+- No open todos at report time.
+{% endfor %}
