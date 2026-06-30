@@ -1,4 +1,4 @@
-# Terms & Conditions
+# Time Secretary Terms & Conditions
 
 Effective date: June 29, 2026
 
@@ -6,9 +6,9 @@ Effective date: June 29, 2026
 
 Time Secretary
 
-## Description
+## Program Description
 
-Time Secretary provides private productivity, time tracking, reminders, location-event logging, and local dashboard notification messages. Use of the app is controlled by the app owner/operator.
+Time Secretary provides private productivity, time-tracking, reminder, work-hours tracking, location-event logging, command response, and local dashboard notification messages.
 
 ## Message Types
 
@@ -18,21 +18,19 @@ Messages may include:
 - Activity logging prompts.
 - Reminders.
 - Command responses.
-- Time and location confirmations.
+- Work-hours and location confirmations.
 - Daily summary notifications.
-- Link-only briefing or report notifications.
-
-The app does not send marketing or promotional messages.
+- Link-only briefing/report notifications.
 
 ## Message Frequency
 
-Message frequency varies based on user configuration. If 15-minute check-ins are enabled, messages may be sent up to every 15 minutes during configured active hours.
+Message frequency varies based on user configuration. If 15-minute check-ins are enabled, messages may be sent as often as every 15 minutes during configured active hours.
 
-## Fees
+## Message And Data Rates
 
 Message and data rates may apply.
 
-## Opt Out
+## Opt-Out
 
 Reply STOP to opt out of SMS messages.
 
@@ -40,15 +38,32 @@ Reply STOP to opt out of SMS messages.
 
 Reply HELP for help.
 
+## No Marketing
+
+Time Secretary does not send marketing or promotional SMS messages.
+
+## Local/Private Reports
+
+Full reports, secure captures, work notes, run notes, process details, and briefing contents are stored locally and are not sent by SMS by default. SMS notifications may include a link-only notification to a local/private dashboard.
+
+## User Responsibility
+
+The app owner/operator is responsible for:
+
+- Securing the local machine.
+- Securing `.env`.
+- Securing Twilio credentials.
+- Securing Tailscale access.
+- Securing backups and exports.
+- Controlling who can access the dashboard.
+
+## Privacy Policy
+
+See the [Privacy Policy](privacy-policy.md).
+
+## Support / Contact
+
 Support: contact the Time Secretary app owner/operator.
-
-## Local Reports And Sensitive Content
-
-Full reports, secure captures, and sensitive notes are stored locally and are not sent by SMS by default. SMS notifications may include a link to the local/private dashboard.
-
-## Owner/Operator Responsibilities
-
-The user or app owner/operator is responsible for securing their local machine, `.env` file, Twilio credentials, Tailscale access, backups, exports, and database.
 
 ## Changes
 

@@ -208,7 +208,7 @@ questions for Project Alpha meeting
 SMS replies are link-only by default. The full briefing is stored locally in SQLite and Markdown under `reports/briefings/`. The SMS response does not include private details:
 
 ```text
-Briefing ready: http://device.tailnet.ts.net:8002/dashboard/briefings/8f3a91c0
+Briefing ready: https://[secure-local-dashboard]/dashboard/briefings/[briefing-id]
 ```
 
 Dashboard/API:
@@ -291,15 +291,23 @@ Useful scripts:
 
 ## Public Compliance Pages
 
-The `/docs` folder contains public Privacy Policy and Terms & Conditions pages for SMS registration/compliance:
+The `/docs` folder contains public pages for Twilio A2P/SMS registration.
 
+Public pages include:
+
+- [Time Secretary overview](docs/index.md)
+- [SMS opt-in/consent page](docs/opt-in.md)
 - [Privacy Policy](docs/privacy-policy.md)
 - [Terms & Conditions](docs/terms-and-conditions.md)
-- [Compliance index](docs/index.md)
 
-These pages are safe to publish publicly. They do not contain secrets, credentials, private app data, generated reports, secure capture contents, or private briefing content.
+These pages are intended for public GitHub Pages publishing. They must not contain secrets, real phone numbers, Twilio credentials, secure capture tokens, Tailscale URLs, generated reports, proprietary notes, or private data.
 
-If using GitHub Pages, publish the `/docs` folder and use the resulting Privacy Policy and Terms & Conditions URLs for Twilio registration.
+Use the GitHub Pages URLs for Twilio fields:
+
+- Website URL: `/docs/index.md` published page.
+- Opt-in URL / Call to Action URL: `/docs/opt-in.md` published page.
+- Privacy Policy URL: `/docs/privacy-policy.md` published page.
+- Terms & Conditions URL: `/docs/terms-and-conditions.md` published page.
 
 ## Optional Local LLM
 
@@ -395,7 +403,7 @@ Shortcut setup:
 2. Add **Get Current Date**.
 3. Add **Get Contents of URL**.
 4. Method: `POST`.
-5. URL: `https://your-tailscale-name.your-tailnet.ts.net/secure-capture`.
+5. URL: `https://[secure-local-access-host]/secure-capture`.
 6. Request body: JSON.
 7. Show notification: `Note captured.`
 
